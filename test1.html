@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>REST API Demo</title>
+</head>
+<body>
+<h1>REST API Demo</h1>
+<form action="/api/v1/test" method="post">
+<input type="text" name="type" placeholder="Type">
+<input type="text" name="test_data" placeholder="Test Data">
+<input type="submit" value="Submit">
+</form>
+<div id="response"></div>
+<iframe id="iframe" width="500" height="500" src="" frameborder="0"></iframe>
+<script>
+function getAPIResponse(type, test_data) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/v1/test");
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify({
+    type: type,
+    test_data: test_data
+  }));
+
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var response = JSON.parse(xhr.responseText);
+      $("#response").text(response.message);
+      $("#iframe").src = "data:text/html," + encodeURIComponent(response.message);
+    } else {
+      $("#response").text("Error: " + xhr.status);
+    }
+  };
+}
+
+$("form").submit(function() {
+  var type = $("#type").val();
+  var test_data = $("#test_data").val();
+  getAPIResponse(type, test_data);
+});
+</script>
+</body>
+</html>
