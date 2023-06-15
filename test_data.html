@@ -1,6 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form-container {
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+
+    .form-container input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-container button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .form-container button:hover {
+      background-color: #45a049;
+    }
+
+    .response-container {
+      max-width: 400px;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f0f0f0;
+    }
+
+    .download-button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>REST API Request</h1>
+
+  <div class="form-container">
+    <form id="apiForm">
+      <label for="type">Type:</label>
+      <input type="text" id="type" name="type" required>
+
+      <label for="test_data">Test Data:</label>
+      <input type="text" id="test_data" name="test_data" required>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <div class="response-container">
+    <h2>Response:</h2>
+    <textarea id="response" readonly></textarea>
+
+    <a href="#" id="downloadButton" class="download-button" download>Download Response</a>
+  </div>
+
+  <script>
+    // Add your JavaScript code here
+  </script>
+</body>
+</html>
+
+    
     <title>REST API Request</title>
     <script>
         function submitRequest() {
