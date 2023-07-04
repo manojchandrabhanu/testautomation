@@ -1,5 +1,23 @@
  regex = /\{(?:[^{}]|(?R))*\}/
 
+
+import java.util.regex.Pattern
+import java.util.regex.Matcher
+
+def input = 'sdflsadjfskfjsldfjslf sdfkjsldkfjsldkf lskdjf lskdjf lskjf lskjf lskjdf  { "my_predictions": { "tag": "1", "preds": { "pred": { "hips": [ { "hip": { "id": "1", "comment": "hello" } }, { "hip": { "id": "2", "comment": "hello2" } } ] } } } } asdfjlskjfieenfecv inoienowenciweniwencwneo32;ajksdf;kje2 .'
+
+def regex = /\{(?:[^{}]|(?0))*\}/
+def pattern = Pattern.compile(regex)
+def matcher = pattern.matcher(input)
+
+if (matcher.find()) {
+    def jsonString = matcher.group(0)
+    println(jsonString)
+} else {
+    println("No JSON found in the input string.")
+}
+
+
 <!DOCTYPE html>
 <html>
 <head>
