@@ -1,0 +1,88 @@
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueueManager;
+import com.ibm.mq.MQConstants;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+
+public class QueuePropertyValidatorExcel {
+
+    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
+    private static final String HOST = "your_mq_host";
+    private static final int PORT = 1414;
+
+    public static void main(String[] args) {
+        try {
+            // Read input from Excel
+            try (FileInputStream file = new FileInputStream("queue_validation_input.xlsx")) {
+                XSSFWorkbook workbook = new XSSFWorkbook(file);
+                XSSFSheet sheet = workbook.getSheetAt(0);
+
+                // Process each row (skip header)
+                int rowCount = sheet.getPhysicalNumberOfRows();
+                for (int i = 1; i < rowCount; i++) {
+                    processRow(sheet.getRow(i), workbook);
+                }
+
+                // Write the results back to Excel
+                try (FileOutputStream fileOut = new FileOutputStream("queue_validation_input.xlsx")) {
+                    workbook.write(fileOut);
+                    System.out.println("Results written to queue_validation_input.xlsx");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    private static void processRow(Row row, XSSFWorkbook workbook) {
+        try {
+            String queueName = row.getCell(0).getStringCellValue();
+            String propertyName = row.getCell(1).getStringCellValue();
+            String expectedValue = row.getCell(2).getStringCellValue();
+
+            MQQueueManager queueManager = new MQQueueManager(QUEUE_MANAGER_NAME, CONNECTION_OPTIONS, HOST, PORT);
+            com.ibm.mq.MQQueue queue = accessQueue(queueManager, queueName);
+            boolean actualValue = validateProperty(queue, propertyName);
+
+            // Set Result to PASS/FAIL
+            Cell resultCell = row.createCell(3);
+            resultCell.setCellValue(actualValue == Boolean.parseBoolean(expectedValue) ? "PASS" : "FAIL");
+
+            queue.close();
+            queueManager.disconnect();
+        } catch (Exception e) {
+            System.err.println("Error processing row: " + e.getMessage());
+        }
+    }
+
+    private static com.ibm.mq.MQQueue accessQueue(MQQueueManager queueManager, String queueName) throws MQException {
+        int openOptions = com.ibm.mq.MQConstants.MQOO_INPUT_AS_Q_DEF + com.ibm.mq.MQConstants.MQOO_INQUIRE;
+        return queueManager.accessQueue(queueName, openOptions);
+    }
+
+    private static boolean validateProperty(com.ibm.mq.MQQueue queue, String propertyName) throws MQException {
+        // Mapping of property name to MQ constant
+        HashMap<String, Integer> propertyMap = new HashMap<>();
+        propertyMap.put("GET", com.ibm.mq.MQConstants.MQPROP_GET);
+        propertyMap.put("PUT", com.ibm.mq.MQConstants.MQPROP_PUT);
+        // ... add other properties as needed
+
+        if (!propertyMap.containsKey(propertyName)) {
+            System.err.println("Invalid property name: " + propertyName);
+            return false;
+        }
+
+        byte[] buffer = new byte[4096];
+        queue.getInquire(new int[]{propertyMap.get(propertyName)}, buffer);
+        int prop = com.ibm.mq.MQGetMessage.convertBytesToInt(buffer, 0);
+
+        return (prop & propertyMap.get(propertyName)) != 0;
+    }
+} 
