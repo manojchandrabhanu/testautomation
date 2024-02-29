@@ -86,3 +86,97 @@ public class QueuePropertyValidatorExcel {
         return (prop & propertyMap.get(propertyName)) != 0;
     }
 } 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQEnvironment;
+import com.ibm.mq.MQQueueManager;
+import com.ibm.mq.constants.MQConstants;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+
+public class QueuePropertyValidatorSSL {
+
+    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
+    private static final String HOST = "your_mq_host";
+    private static final int PORT = 1414;
+
+    public static void main(String[] args) {
+        try {
+            // Read input from Excel
+            try (FileInputStream file = new FileInputStream("queue_validation_input_ssl.xlsx")) {
+                XSSFWorkbook workbook = new XSSFWorkbook(file);
+                XSSFSheet sheet = workbook.getSheetAt(0);
+
+                // Process each row (skip header)
+                int rowCount = sheet.getPhysicalNumberOfRows();
+                for (int i = 1; i < rowCount; i++) {
+                    processRow(sheet.getRow(i), workbook);
+                }
+
+                // Write the results back to Excel
+                try (FileOutputStream fileOut = new FileOutputStream("queue_validation_input_ssl.xlsx")) {
+                    workbook.write(fileOut);
+                    System.out.println("Results written to queue_validation_input_ssl.xlsx");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    private static void processRow(Row row, XSSFWorkbook workbook) {
+        try {
+            // ... (read values from Excel cells as before)
+
+            // Validate property and set Result
+            boolean actualValue = validateProperty(queue, propertyName);
+            Cell resultCell = row.createCell(6);
+            resultCell.setCellValue(actualValue == Boolean.parseBoolean(expectedValue) ? "PASS" : "FAIL");
+
+            // Set Error message if applicable
+            Cell errorCell = row.createCell(7);
+            if (resultCell.getStringCellValue().equals("FAIL")) {
+                errorCell.setCellValue(getErrorMessage(actualValue, expectedValue, propertyName));
+            }
+
+            // ... (close queue and disconnect)
+        } catch (Exception e) {
+            System.err.println("Error processing row: " + e.getMessage());
+            // Set error message for unexpected exceptions
+            Cell errorCell = row.createCell(7);
+            errorCell.setCellValue(e.getMessage());
+        }
+    }
+
+    private static String getErrorMessage(boolean actualValue, String expectedValue, String propertyName) {
+        if (actualValue && expectedValue.equalsIgnoreCase("Disabled")) {
+            return "Property " + propertyName + " is enabled but expected to be disabled.";
+        } else if (!actualValue && expectedValue.equalsIgnoreCase("Enabled")) {
+            return "Property " + propertyName + " is disabled but expected to be enabled.";
+        } else {
+            // Handle unexpected mismatch
+            return "Unexpected property mismatch";
+        }
+    }
+
+    // ... (validateProperty and accessQueue methods as before)
+}
+
