@@ -1,0 +1,45 @@
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueueManager;
+
+public class QueuePropertyValidator {
+
+    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
+    private static final String QUEUE_NAME = "your_queue_name";
+    private static final String HOST = "your_mq_host";
+    private static final int PORT = 1414; // Default MQ port
+
+    public static void main(String[] args) {
+        try {
+            // Create a Queue Manager instance
+            MQQueueManager queueManager = new MQQueueManager(QUEUE_MANAGER_NAME, CONNECTION_OPTIONS, HOST, PORT);
+
+            // Open the target queue
+            int openOptions = com.ibm.mq.MQConstants.MQOO_INPUT_AS_Q_DEF + com.ibm.mq.MQConstants.MQOO_INQUIRE;
+            com.ibm.mq.MQQueue queue = queueManager.accessQueue(QUEUE_NAME, openOptions);
+
+            // Get queue attributes
+            int[] attributes = new int[] {
+                com.ibm.mq.MQConstants.MQIA_PROPERTIES,
+            };
+            byte[] buffer = new byte[4096]; // Adjust buffer size if needed
+            queue.getInquire(attributes, buffer);
+
+            // Parse the retrieved data
+            int properties = com.ibm.mq.MQGetMessage.convertBytesToInt(buffer, 0);
+
+            // Check for GET and PUT properties
+            boolean getEnabled = (properties & com.ibm.mq.MQConstants.MQPROP_GET) != 0;
+            boolean putEnabled = (properties & com.ibm.mq.MQConstants.MQPROP_PUT) != 0;
+
+            System.out.println("GET property enabled: " + getEnabled);
+            System.out.println("PUT property enabled: " + putEnabled);
+
+            // Close the queue and disconnect from MQ
+            queue.close();
+            queueManager.disconnect();
+
+        } catch (MQException e) {
+            System.err.println("Error connecting to MQ or accessing queue: " + e.getMessage());
+        }
+    }
+}
