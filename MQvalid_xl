@@ -1,0 +1,63 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class MQPropertyValidator {
+
+    public static void main(String[] args) {
+        try {
+            FileInputStream file = new FileInputStream(new File("mq_properties.xlsx"));
+            Workbook workbook = new XSSFWorkbook(file);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            int rowCount = sheet.getLastRowNum();
+            Map<String, String> propertiesMap = new HashMap<>();
+            
+            // Populate the properties map
+            for (int i = 1; i <= rowCount; i++) {
+                Row row = sheet.getRow(i);
+                Cell propertyNameCell = row.getCell(2);
+                Cell expectedValueCell = row.getCell(3);
+                propertiesMap.put(propertyNameCell.getStringCellValue(), expectedValueCell.getStringCellValue());
+            }
+
+            // Simulate validation of properties in IBM MQ
+            for (int i = 1; i <= rowCount; i++) {
+                Row row = sheet.getRow(i);
+                String propertyName = row.getCell(2).getStringCellValue();
+                String expectedValue = row.getCell(3).getStringCellValue();
+                
+                // Here you can write code to validate property in IBM MQ
+                // For the sake of this example, we're just checking if the property is present in the map
+                if (propertiesMap.containsKey(propertyName)) {
+                    String actualValue = propertiesMap.get(propertyName);
+                    if (actualValue.equalsIgnoreCase(expectedValue)) {
+                        row.createCell(4).setCellValue("PASS");
+                    } else {
+                        row.createCell(4).setCellValue("FAIL");
+                    }
+                } else {
+                    row.createCell(4).setCellValue("Property not found");
+                }
+            }
+
+            file.close();
+
+            FileOutputStream outFile = new FileOutputStream(new File("mq_properties.xlsx"));
+            workbook.write(outFile);
+            outFile.close();
+            workbook.close();
+
+            System.out.println("MQ properties validation completed and results updated in Excel.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
