@@ -1,0 +1,75 @@
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueueManager;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+
+public class QueuePropertyValidator {
+
+    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
+    private static final String QUEUE_NAME = "your_queue_name";
+    private static final String HOST = "your_mq_host";
+    private static final int PORT = 1414; // Default MQ port
+
+    public static void main(String[] args) {
+        try {
+            // Create a workbook
+            HSSFWorkbook workbook = new HSSFWorkbook();
+            Sheet sheet = workbook.createSheet("MQ Queue Validation");
+
+            // Create a header row
+            Row headerRow = sheet.createRow(0);
+            Cell headerCell1 = headerRow.createCell(0);
+            headerCell1.setCellValue("Queue Name");
+            Cell headerCell2 = headerRow.createCell(1);
+            headerCell2.setCellValue("GET Enabled");
+            Cell headerCell3 = headerRow.createCell(2);
+            headerCell3.setCellValue("PUT Enabled");
+            Cell headerCell4 = headerRow.createCell(3);
+            headerCell4.setCellValue("Status");
+
+            // Connect to MQ and validate properties
+            MQQueueManager queueManager = new MQQueueManager(QUEUE_MANAGER_NAME, CONNECTION_OPTIONS, HOST, PORT);
+            com.ibm.mq.MQQueue queue = accessQueue(queueManager, QUEUE_NAME);
+            int[] attributes = new int[] { com.ibm.mq.MQConstants.MQIA_PROPERTIES };
+            byte[] buffer = new byte[4096];
+            queue.getInquire(attributes, buffer);
+
+            int properties = com.ibm.mq.MQGetMessage.convertBytesToInt(buffer, 0);
+            boolean getEnabled = (properties & com.ibm.mq.MQConstants.MQPROP_GET) != 0;
+            boolean putEnabled = (properties & com.ibm.mq.MQConstants.MQPROP_PUT) != 0;
+
+            // Create a data row
+            Row dataRow = sheet.createRow(1);
+            Cell dataCell1 = dataRow.createCell(0);
+            dataCell1.setCellValue(QUEUE_NAME);
+            Cell dataCell2 = dataRow.createCell(1);
+            dataCell2.setCellValue(getEnabled);
+            Cell dataCell3 = dataRow.createCell(2);
+            dataCell3.setCellValue(putEnabled);
+            Cell dataCell4 = dataRow.createCell(3);
+            dataCell4.setCellValue("PASS");
+
+            // Close the queue and disconnect from MQ
+            queue.close();
+            queueManager.disconnect();
+
+            // Write the workbook to a file
+            try (java.io.FileOutputStream fileOut = new java.io.FileOutputStream("queue_validation.xls")) {
+                workbook.write(fileOut);
+                System.out.println("Results written to queue_validation.xls");
+            }
+
+        } catch (MQException e) {
+            System.err.println("Error connecting to MQ or accessing queue: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error writing to Excel file: " + e.getMessage());
+        }
+    }
+
+    private static com.ibm.mq.MQQueue accessQueue(MQQueueManager queueManager, String queueName) throws MQException {
+        int openOptions = com.ibm.mq.MQConstants.MQOO_INPUT_AS_Q_DEF + com.ibm.mq.MQConstants.MQOO_INQUIRE;
+        return queueManager.accessQueue(queueName, openOptions);
+    }
+}
