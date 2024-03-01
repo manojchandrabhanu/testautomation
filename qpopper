@@ -1,0 +1,55 @@
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQGetMessageOptions;
+import com.ibm.mq.MQQueue;
+import com.ibm.mq.constants.MQConstants;
+
+public class QueuePopper {
+
+    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
+    private static final String QUEUE_NAME = "your_queue_name";
+    private static final String HOST = "your_mq_host";
+    private static final int PORT = 1414;
+
+    public static void main(String[] args) {
+        try {
+            // Connect to MQ
+            MQQueueManager queueManager = new MQQueueManager(QUEUE_MANAGER_NAME, CONNECTION_OPTIONS, HOST, PORT);
+            MQQueue queue = accessQueue(queueManager, QUEUE_NAME);
+
+            // Get message options
+            MQGetMessageOptions options = new MQGetMessageOptions();
+            options.options = MQConstants.MQGMO_WAIT; // Wait for a message 
+            options.waitInterval = 1000; // Wait for 1 second
+
+            while (true) {
+                // Get message
+                MQMessage message = new MQMessage();
+                int messageLength = queue.get(message, options);
+
+                // Check if message exists
+                if (messageLength > 0) {
+                    // Process message
+                    System.out.println("Received message: " + message.readString());
+
+                    // Acknowledge message (optional)
+                    // queue.delete(message, options);
+                } else {
+                    System.out.println("No message available.");
+                    break; // Exit loop if no message after waiting
+                }
+            }
+
+            // Close queue and disconnect from MQ
+            queue.close();
+            queueManager.disconnect();
+
+        } catch (MQException e) {
+            System.err.println("Error accessing MQ: " + e.getMessage());
+        }
+    }
+
+    private static MQQueue accessQueue(MQQueueManager queueManager, String queueName) throws MQException {
+        int openOptions = MQConstants.MQOO_INPUT_AS_Q_DEF + MQConstants.MQOO_INQUIRE;
+        return queueManager.accessQueue(queueName, openOptions);
+    }
+}
