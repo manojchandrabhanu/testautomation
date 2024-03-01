@@ -1,0 +1,72 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+// ... (import other necessary classes)
+
+public class QueuePropertyValidatorSSLTest {
+
+    @DataProvider(name = "excelData")
+    public Object[][] getExcelData() throws Exception {
+        try (FileInputStream file = new FileInputStream("queue_validation_input_ssl.xlsx")) {
+            XSSFWorkbook workbook = new XSSFWorkbook(file);
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            int rowCount = sheet.getPhysicalNumberOfRows();
+            Object[][] data = new Object[rowCount - 1][];
+            for (int i = 1; i < rowCount; i++) {
+                Row row = sheet.getRow(i);
+                data[i - 1] = new Object[]{
+                        row.getCell(0).getStringCellValue(),
+                        row.getCell(1).getStringCellValue(),
+                        row.getCell(2).getStringCellValue(),
+                        row.getCell(3).getStringCellValue(),
+                        row.getCell(4).getStringCellValue(),
+                        row.getCell(5).getStringCellValue()
+                };
+            }
+            return data;
+        }
+    }
+
+    @Test(dataProvider = "excelData")
+    public void validateQueueProperty(String queueManagerName, String channelName, String cipherSuite,
+                                      String queueName, String propertyName, String expectedValue) {
+        XSSFWorkbook workbook = null; // Initialize workbook outside try block
+
+        try {
+            // ... (logic to connect to MQ, validate property)
+
+            String result = actualValue == Boolean.parseBoolean(expectedValue) ? "PASS" : "FAIL";
+            String error = getErrorMessage(actualValue, expectedValue, propertyName);
+            updateExcelResults(workbook, rowNum, result, error); // Call updateExcelResults
+
+        } catch (Exception e) {
+            // ... (handle exceptions and set error message in Excel)
+            updateExcelResults(workbook, rowNum, "FAIL", e.getMessage()); // Update with error message
+        } finally {
+            if (workbook != null) {
+                try (FileOutputStream fileOut = new FileOutputStream("queue_validation_input_ssl.xlsx")) {
+                    workbook.write(fileOut);
+                    System.out.println("Results written to queue_validation_input_ssl.xlsx");
+                } catch (Exception e) {
+                    System.err.println("Error writing to Excel file: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private void updateExcelResults(XSSFWorkbook workbook, int rowNum, String result, String error) {
+        Sheet sheet = workbook.getSheetAt(0);
+        Row row = sheet.getRow(rowNum);
+        Cell resultCell = row.createCell(6);
+        Cell errorCell = row.createCell(7);
+        resultCell.setCellValue(result);
+        errorCell.setCellValue(error);
+    }
+
+    // ... (other methods for accessing queues and validating properties)
+}
