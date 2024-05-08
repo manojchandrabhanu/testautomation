@@ -1,0 +1,16 @@
+LinkedHashMap<String, Object> extractAndMergeKeys(LinkedHashMap<String, Object>[] maps) {
+    def mergedMap = new LinkedHashMap<>()
+    
+    // Iterate over each LinkedHashMap in the array
+    maps.each { map ->
+        // Iterate over the keys of each map
+        map.each { key, value ->
+            // If the key is not present in the mergedMap, add it
+            if (!mergedMap.containsKey(key)) {
+                mergedMap.put(key, value)
+            }
+        }
+    }
+    
+    return mergedMap
+}
