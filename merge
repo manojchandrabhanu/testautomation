@@ -14,3 +14,18 @@ LinkedHashMap<String, Object> extractAndMergeKeys(LinkedHashMap<String, Object>[
     
     return mergedMap
 }
+
+
+def listOfMaps = [
+    [name: 'John', age: 30],
+    [name: 'Alice', age: 25],
+    [name: 'Bob', age: 35]
+]
+
+// Extract names from the list of maps
+def names = listOfMaps.collect { it.name }
+
+// Convert names to a comma-separated string
+def namesString = names.join(', ')
+
+println namesString
