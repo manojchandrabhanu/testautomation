@@ -1,4 +1,7 @@
+string(name: 'IMAGE_VERSION', defaultValue: 'latest', description: 'Docker image version')
+        string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')
 
+        
 
 ```groovy
 // A function to sort the list of strings on id
