@@ -1,5 +1,71 @@
-string(name: 'IMAGE_VERSION', defaultValue: 'latest', description: 'Docker image version')
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'IMAGE_VERSION', defaultValue: 'latest', description: 'Docker image version')
         string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')
+    }
+    
+    environment {
+        DOCKER_IMAGE = "my-docker-registry/my-app:${params.IMAGE_VERSION}"
+        KUBE_NAMESPACE = "${params.NAMESPACE}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the source code from the repository
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                script {
+                    // Example build step
+                    echo "Building Docker image: ${env.DOCKER_IMAGE}"
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                }
+            }
+        }
+        
+        stage('Push') {
+            steps {
+                script {
+                    // Example push step
+                    echo "Pushing Docker image: ${env.DOCKER_IMAGE}"
+                    sh 'docker push ${DOCKER_IMAGE}'
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    // Deploy to Kubernetes
+                    echo "Deploying to Kubernetes namespace: ${env.KUBE_NAMESPACE}"
+                    sh """
+                    kubectl apply -f deployment.yaml --namespace ${env.KUBE_NAMESPACE}
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Cleanup steps
+            echo 'Cleaning up...'
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
+
 
         
 
