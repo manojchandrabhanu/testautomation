@@ -1,3 +1,15 @@
+first_origin=$(grep 'ONLYORIGINS=' /apps/continuity/$VAR_L_ENV/$VAR_L_APPID/config/fof.cfg | cut -d'=' -f2 | cut -d',' -f1)
+
+    # Check if the Origin is the first value in ONLYORIGINS
+    if [[ $Origin == $first_origin ]]; then
+        sed -i '/ONLYORIGINS=/{h;s/=.*/=NEW_VALUE/;x;d;};x;s/^.*$//;H' /apps/continuity/$VAR_L_ENV/$VAR_L_APPID/config/fof.cfg
+        echo "First origin value has been handled."
+    else
+        sed -i 's/\(ONLYORIGINS=\)\([^,]*\)/\1\2,NEW_ORIGIN/' /apps/continuity/$VAR_L_ENV/$VAR_L_APPID/config/fof.cfg
+        echo "Origin has been removed."
+    fi
+
+
 pipeline {
     agent any
     
