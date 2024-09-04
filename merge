@@ -1,3 +1,8 @@
+sed -i 's/\(Onlyorigin=\)\?\([^,]*,\)\?VALUE_TO_REMOVE\(,\|$\)/\1/; s/,\+/,/g; s/Onlyorigin=,//; s/,$//' filename
+
+
+
+
 sed -i 's/\(Onlyorigin=[^,]*\|,\)VALUE_TO_REMOVE\(,\|$\)/\1\2/; s/,\+/,/g; s/Onlyorigin=,//; s/,$//' filename
 
 
