@@ -1,3 +1,6 @@
+sed -i 's/\(ONLYORIGINS=\|,\)JPM-KW\(,\|$\)/\1\2/g; s/,\+/,/g; s/ONLYORIGINS=,//; s/,$//' /apps/continuity/qal/nach/config/fot.cfg
+
+
 sed -i 's/\(Onlyorigin=\)\?\([^,]*,\)\?VALUE_TO_REMOVE\(,\|$\)/\1/; s/,\+/,/g; s/Onlyorigin=,//; s/,$//' filename
 
 
