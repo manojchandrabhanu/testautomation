@@ -1,3 +1,7 @@
+
+sed -i 's/\(Onlyorigin=[^,]*,\?\)\?\bVALUE_TO_REMOVE\b,\?//g' filename
+
+
 LinkedHashMap<String, Object> extractAndMergeKeys(LinkedHashMap<String, Object>[] maps) {
     def mergedMap = new LinkedHashMap<>()
     
