@@ -1,0 +1,58 @@
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.poi.ss.usermodel.*
+
+def context = [:]
+
+Given(~'^I read the file in path (.+)$') { String filepath ->
+    def fileContent = new File(filepath).text
+    context.fileContent = fileContent
+    context.filepath = filepath
+}
+
+When(~'^Check for duplicate tags in the (.+)$') { String filepath ->
+    def pattern = /\[(.{15})\]\s*([^\n]+)/
+    def matches = context.fileContent.findAll(pattern)
+    def duplicates = matches.groupBy { it[0] }.findAll { it.value.size() > 1 }
+    context.duplicates = duplicates
+}
+
+Then(~'^Check for valid tag length$') {
+    def pattern = /\[(.{15})\]\s*([^\n]+)/
+    def matches = context.fileContent.findAll(pattern)
+    def invalidTags = matches.findAll { it[0].length() != 15 }
+    context.invalidTags = invalidTags
+}
+
+Then(~'^Save into Excel file$') {
+    def workbook = context.workbook ?: new XSSFWorkbook()
+    def sheet = workbook.getSheet("Duplicates") ?: workbook.createSheet("Duplicates")
+    def rowIndex = sheet.physicalNumberOfRows
+
+    context.duplicates.each { tag, values ->
+        def row = sheet.createRow(rowIndex++)
+        row.createCell(0).setCellValue(context.filepath)
+        row.createCell(1).setCellValue(tag)
+        row.createCell(2).setCellValue(values*.getAt(1).join(', '))
+        row.createCell(3).setCellValue("Duplicate")
+    }
+
+    context.invalidTags.each { tag, value ->
+        def row = sheet.createRow(rowIndex++)
+        row.createCell(0).setCellValue(context.filepath)
+        row.createCell(1).setCellValue(tag)
+        row.createCell(2).setCellValue(value)
+        row.createCell(3).setCellValue("Invalid Length")
+    }
+
+    context.workbook = workbook
+}
+
+// After all scenarios, save the workbook to a file
+After {
+    if (context.workbook) {
+        def fileOut = new FileOutputStream("duplicates.xlsx")
+        context.workbook.write(fileOut)
+        fileOut.close()
+        context.workbook.close()
+    }
+}
