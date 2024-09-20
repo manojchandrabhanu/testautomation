@@ -1,182 +1,52 @@
-import com.ibm.mq.MQException;
-import com.ibm.mq.MQQueueManager;
-import com.ibm.mq.MQConstants;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import groovy.io.FileType
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.poi.ss.usermodel.*
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.HashMap;
+def processFilesInDirectory(String directoryPath, String outputExcelPath) {
+    def dir = new File(directoryPath)
+    def workbook = new XSSFWorkbook()
+    def sheet = workbook.createSheet("Results")
+    
+    // Create header row
+    def headerRow = sheet.createRow(0)
+    headerRow.createCell(0).setCellValue("Filename")
+    headerRow.createCell(1).setCellValue("Duplicate Tags")
+    headerRow.createCell(2).setCellValue("Invalid Length Tags")
 
-public class QueuePropertyValidatorExcel {
+    int rowIndex = 1
 
-    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
-    private static final String HOST = "your_mq_host";
-    private static final int PORT = 1414;
+    dir.eachFileRecurse(FileType.FILES) { file ->
+        def tags = []
+        def duplicateTags = []
+        def invalidLengthTags = []
 
-    public static void main(String[] args) {
-        try {
-            // Read input from Excel
-            try (FileInputStream file = new FileInputStream("queue_validation_input.xlsx")) {
-                XSSFWorkbook workbook = new XSSFWorkbook(file);
-                XSSFSheet sheet = workbook.getSheetAt(0);
-
-                // Process each row (skip header)
-                int rowCount = sheet.getPhysicalNumberOfRows();
-                for (int i = 1; i < rowCount; i++) {
-                    processRow(sheet.getRow(i), workbook);
+        file.eachLine { line ->
+            def matcher = line =~ /^\[(.{15})\]\s+(.*)$/
+            if (matcher.matches()) {
+                def tag = matcher[0][1].trim()
+                if (tag.length() != 15) {
+                    invalidLengthTags << tag
                 }
-
-                // Write the results back to Excel
-                try (FileOutputStream fileOut = new FileOutputStream("queue_validation_input.xlsx")) {
-                    workbook.write(fileOut);
-                    System.out.println("Results written to queue_validation_input.xlsx");
+                if (tags.contains(tag)) {
+                    duplicateTags << tag
+                } else {
+                    tags << tag
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Error processing Excel file: " + e.getMessage());
-        }
-    }
-
-    private static void processRow(Row row, XSSFWorkbook workbook) {
-        try {
-            String queueName = row.getCell(0).getStringCellValue();
-            String propertyName = row.getCell(1).getStringCellValue();
-            String expectedValue = row.getCell(2).getStringCellValue();
-
-            MQQueueManager queueManager = new MQQueueManager(QUEUE_MANAGER_NAME, CONNECTION_OPTIONS, HOST, PORT);
-            com.ibm.mq.MQQueue queue = accessQueue(queueManager, queueName);
-            boolean actualValue = validateProperty(queue, propertyName);
-
-            // Set Result to PASS/FAIL
-            Cell resultCell = row.createCell(3);
-            resultCell.setCellValue(actualValue == Boolean.parseBoolean(expectedValue) ? "PASS" : "FAIL");
-
-            queue.close();
-            queueManager.disconnect();
-        } catch (Exception e) {
-            System.err.println("Error processing row: " + e.getMessage());
-        }
-    }
-
-    private static com.ibm.mq.MQQueue accessQueue(MQQueueManager queueManager, String queueName) throws MQException {
-        int openOptions = com.ibm.mq.MQConstants.MQOO_INPUT_AS_Q_DEF + com.ibm.mq.MQConstants.MQOO_INQUIRE;
-        return queueManager.accessQueue(queueName, openOptions);
-    }
-
-    private static boolean validateProperty(com.ibm.mq.MQQueue queue, String propertyName) throws MQException {
-        // Mapping of property name to MQ constant
-        HashMap<String, Integer> propertyMap = new HashMap<>();
-        propertyMap.put("GET", com.ibm.mq.MQConstants.MQPROP_GET);
-        propertyMap.put("PUT", com.ibm.mq.MQConstants.MQPROP_PUT);
-        // ... add other properties as needed
-
-        if (!propertyMap.containsKey(propertyName)) {
-            System.err.println("Invalid property name: " + propertyName);
-            return false;
         }
 
-        byte[] buffer = new byte[4096];
-        queue.getInquire(new int[]{propertyMap.get(propertyName)}, buffer);
-        int prop = com.ibm.mq.MQGetMessage.convertBytesToInt(buffer, 0);
-
-        return (prop & propertyMap.get(propertyName)) != 0;
-    }
-} 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import com.ibm.mq.MQException;
-import com.ibm.mq.MQEnvironment;
-import com.ibm.mq.MQQueueManager;
-import com.ibm.mq.constants.MQConstants;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-
-public class QueuePropertyValidatorSSL {
-
-    private static final String QUEUE_MANAGER_NAME = "your_queue_manager_name";
-    private static final String HOST = "your_mq_host";
-    private static final int PORT = 1414;
-
-    public static void main(String[] args) {
-        try {
-            // Read input from Excel
-            try (FileInputStream file = new FileInputStream("queue_validation_input_ssl.xlsx")) {
-                XSSFWorkbook workbook = new XSSFWorkbook(file);
-                XSSFSheet sheet = workbook.getSheetAt(0);
-
-                // Process each row (skip header)
-                int rowCount = sheet.getPhysicalNumberOfRows();
-                for (int i = 1; i < rowCount; i++) {
-                    processRow(sheet.getRow(i), workbook);
-                }
-
-                // Write the results back to Excel
-                try (FileOutputStream fileOut = new FileOutputStream("queue_validation_input_ssl.xlsx")) {
-                    workbook.write(fileOut);
-                    System.out.println("Results written to queue_validation_input_ssl.xlsx");
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error processing Excel file: " + e.getMessage());
-        }
+        // Write results to Excel
+        def row = sheet.createRow(rowIndex++)
+        row.createCell(0).setCellValue(file.name)
+        row.createCell(1).setCellValue(duplicateTags.join(", "))
+        row.createCell(2).setCellValue(invalidLengthTags.join(", "))
     }
 
-    private static void processRow(Row row, XSSFWorkbook workbook) {
-        try {
-            // ... (read values from Excel cells as before)
-
-            // Validate property and set Result
-            boolean actualValue = validateProperty(queue, propertyName);
-            Cell resultCell = row.createCell(6);
-            resultCell.setCellValue(actualValue == Boolean.parseBoolean(expectedValue) ? "PASS" : "FAIL");
-
-            // Set Error message if applicable
-            Cell errorCell = row.createCell(7);
-            if (resultCell.getStringCellValue().equals("FAIL")) {
-                errorCell.setCellValue(getErrorMessage(actualValue, expectedValue, propertyName));
-            }
-
-            // ... (close queue and disconnect)
-        } catch (Exception e) {
-            System.err.println("Error processing row: " + e.getMessage());
-            // Set error message for unexpected exceptions
-            Cell errorCell = row.createCell(7);
-            errorCell.setCellValue(e.getMessage());
-        }
+    // Save the workbook to a file
+    new FileOutputStream(outputExcelPath).withCloseable { fos ->
+        workbook.write(fos)
     }
-
-    private static String getErrorMessage(boolean actualValue, String expectedValue, String propertyName) {
-        if (actualValue && expectedValue.equalsIgnoreCase("Disabled")) {
-            return "Property " + propertyName + " is enabled but expected to be disabled.";
-        } else if (!actualValue && expectedValue.equalsIgnoreCase("Enabled")) {
-            return "Property " + propertyName + " is disabled but expected to be enabled.";
-        } else {
-            // Handle unexpected mismatch
-            return "Unexpected property mismatch";
-        }
-    }
-
-    // ... (validateProperty and accessQueue methods as before)
 }
 
+// Example usage
+processFilesInDirectory("/path/to/your/directory", "/path/to/output/results.xlsx")
