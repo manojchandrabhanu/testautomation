@@ -1,3 +1,6 @@
+// Adjusted regex to capture any tag with brackets
+            def matcher = line =~ /^(\[.*?\])\s+(.*)$/
+
 /^(\[.{15}\])\s+(.*)$/
 
 import groovy.io.FileType
