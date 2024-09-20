@@ -1,3 +1,5 @@
+/^(\[.{15}\])\s+(.*)$/
+
 import groovy.io.FileType
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.ss.usermodel.*
