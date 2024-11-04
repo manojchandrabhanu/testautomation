@@ -1,3 +1,91 @@
+import java.util.Random
+
+def randomizeValue(String value) {
+    Random random = new Random()
+    
+    // Check if the value ends with a number
+    def numberMatcher = value =~ /(\d+)$/
+    
+    if (numberMatcher.find()) {
+        // If it ends with a number, modify the numerical part
+        def numberPart = numberMatcher.group(1)
+        def nonNumberPart = value[0..-numberPart.length()-1] // The part before the number
+        
+        // Randomly decide to add or remove digits
+        if (random.nextBoolean()) {
+            // Add a random digit
+            def randomDigit = random.nextInt(10)
+            numberPart += randomDigit
+        } else if (numberPart.length() > 1) {
+            // Remove one digit if possible
+            numberPart = numberPart[0..-2]
+        }
+        
+        return nonNumberPart + numberPart
+    } else {
+        // If it ends with characters, modify the character part
+        def chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        
+        // Randomly decide to add or remove characters
+        if (random.nextBoolean()) {
+            // Add a random character
+            def randomChar = chars[random.nextInt(chars.length())]
+            return value + randomChar
+        } else if (value.length() > 1) {
+            // Remove one character if possible
+            return value[0..-2]
+        }
+    }
+    
+    return value
+}
+
+def processFufFile(String inputFilePath, String outputFilePath) {
+    File inputFile = new File(inputFilePath)
+    File outputFile = new File(outputFilePath)
+    
+    outputFile.withWriter { writer ->
+        inputFile.eachLine { line ->
+            // Match lines that have tags and values in the FUF format
+            def matcher = line =~ /^\[(.{15})\]\s+(.*)$/
+            
+            if (matcher.matches()) {
+                def tag = matcher[0][1]  // The tag part (including brackets)
+                def value = matcher[0][2]  // The value part
+                
+                // Randomize the value
+                def randomizedValue = randomizeValue(value)
+                
+                // Write back the tag and randomized value to a new file
+                writer.writeLine("[${tag}] ${randomizedValue}")
+            } else {
+                // If the line doesn't match, write it as is (e.g., blank lines, comments)
+                writer.writeLine(line)
+            }
+        }
+    }
+}
+
+// Example usage: process an input FUF file and save it to an output file with randomized values.
+processFufFile("/path/to/input.fuf", "/path/to/output_randomized.fuf")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 first_origin=$(grep 'ONLYORIGINS=' /apps/continuity/$VAR_L_ENV/$VAR_L_APPID/config/fof.cfg | cut -d'=' -f2 | cut -d',' -f1)
 
     # Check if the Origin is the first value in ONLYORIGINS
