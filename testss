@@ -1,0 +1,91 @@
+import java.io.*;
+import java.nio.file.*;
+import java.util.Random;
+import java.util.regex.*;
+
+public class FufRandomizer {
+
+    private static final Random RANDOM = new Random();
+
+    public static void main(String[] args) {
+        String inputFilePath = "path/to/input.fuf";
+        String outputFilePath = "path/to/output_randomized.fuf";
+
+        try {
+            processFufFile(inputFilePath, outputFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void processFufFile(String inputFilePath, String outputFilePath) throws IOException {
+        Path inputPath = Paths.get(inputFilePath);
+        Path outputPath = Paths.get(outputFilePath);
+
+        try (BufferedReader reader = Files.newBufferedReader(inputPath);
+             BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Match lines that have tags and values in the FUF format
+                Pattern pattern = Pattern.compile("^\\[(.{15})\\]\\s+(.*)$");
+                Matcher matcher = pattern.matcher(line);
+
+                if (matcher.matches()) {
+                    String tag = matcher.group(1); // The tag part
+                    String value = matcher.group(2); // The value part
+
+                    // Randomize the value
+                    String randomizedValue = randomizeValue(value);
+
+                    // Write back the tag and randomized value to a new file
+                    writer.write("[" + tag + "] " + randomizedValue);
+                    writer.newLine();
+                } else {
+                    // If the line doesn't match, write it as is (e.g., blank lines, comments)
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+        }
+    }
+
+    private static String randomizeValue(String value) {
+        // Check if the value ends with a number
+        Pattern numberPattern = Pattern.compile("(\\d+)$");
+        Matcher numberMatcher = numberPattern.matcher(value);
+
+        if (numberMatcher.find()) {
+            // If it ends with a number, modify the numerical part
+            String numberPart = numberMatcher.group(1);
+            String nonNumberPart = value.substring(0, value.length() - numberPart.length());
+
+            // Randomly decide to add or remove digits
+            if (RANDOM.nextBoolean()) {
+                // Add a random digit
+                int randomDigit = RANDOM.nextInt(10);
+                numberPart += randomDigit;
+            } else if (numberPart.length() > 1) {
+                // Remove one digit if possible
+                numberPart = numberPart.substring(0, numberPart.length() - 1);
+            }
+
+            return nonNumberPart + numberPart;
+        } else {
+            // If it ends with characters, modify the character part
+            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+            // Randomly decide to add or remove characters
+            if (RANDOM.nextBoolean()) {
+                // Add a random character
+                char randomChar = chars.charAt(RANDOM.nextInt(chars.length()));
+                return value + randomChar;
+            } else if (value.length() > 1) {
+                // Remove one character if possible
+                return value.substring(0, value.length() - 1);
+            }
+        }
+
+        return value;
+    }
+}
