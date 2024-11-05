@@ -1,0 +1,95 @@
+import java.io.*;
+import java.nio.file.*;
+import java.util.Random;
+import java.util.regex.*;
+
+public class FufRandomizer {
+
+    private static final Random RANDOM = new Random();
+
+    public static void main(String[] args) {
+        String inputFilePath = "path/to/input.fuf";
+        String outputFilePath = "path/to/output_randomized.fuf";
+
+        try {
+            processFufFile(inputFilePath, outputFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void processFufFile(String inputFilePath, String outputFilePath) throws IOException {
+        Path inputPath = Paths.get(inputFilePath);
+        Path outputPath = Paths.get(outputFilePath);
+
+        try (BufferedReader reader = Files.newBufferedReader(inputPath);
+             BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
+
+            StringBuilder fileContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                fileContent.append(line).append("\n");
+            }
+
+            // Use DOTALL mode to handle multiline values
+            Pattern pattern = Pattern.compile("^\\[(.{15})\\]\\s+(.*?)(?=\\n\\[|\\z)", Pattern.DOTALL | Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(fileContent.toString());
+
+            while (matcher.find()) {
+                String tag = matcher.group(1); // The tag part
+                String value = matcher.group(2); // The value part
+
+                // Randomize the value
+                String randomizedValue;
+                if (value.contains("\n")) {
+                    // For multiline values, only add characters
+                    randomizedValue = addCharacters(value.trim());
+                } else {
+                    // For single-line values, remove and add characters
+                    randomizedValue = randomizeValue(value.trim());
+                }
+
+                // Write back the tag and randomized value to a new file
+                writer.write("[" + tag + "] " + randomizedValue);
+                writer.newLine();
+            }
+        }
+    }
+
+    private static String randomizeValue(String value) {
+        int length = value.length();
+
+        // Determine number of characters to remove (2 to 4)
+        int charsToRemove = RANDOM.nextInt(3) + 2;
+        if (charsToRemove >= length) {
+            charsToRemove = 0; // If length is less than or equal to charsToRemove, skip removal
+        }
+
+        // Remove characters from the middle
+        if (charsToRemove > 0) {
+            int startPos = RANDOM.nextInt(length - charsToRemove);
+            value = value.substring(0, startPos) + value.substring(startPos + charsToRemove);
+        }
+
+        // Add random characters
+        return addCharacters(value);
+    }
+
+    private static String addCharacters(String value) {
+        int charsToAdd = RANDOM.nextInt(4) + 2; // Add between 2 to 5 characters
+
+        StringBuilder newValue = new StringBuilder(value);
+        for (int i = 0; i < charsToAdd; i++) {
+            char randomChar = getRandomCharacter();
+            int insertPos = RANDOM.nextInt(newValue.length() + 1); // +1 allows insertion at the end
+            newValue.insert(insertPos, randomChar);
+        }
+
+        return newValue.toString();
+    }
+
+    private static char getRandomCharacter() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        return chars.charAt(RANDOM.nextInt(chars.length()));
+    }
+}
