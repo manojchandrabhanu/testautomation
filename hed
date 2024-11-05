@@ -1,0 +1,91 @@
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+
+public class HeaderBuilderFromCSV {
+
+    public static void main(String[] args) {
+        String csvFilePath = "path/to/your/file.csv";
+        try {
+            String header = buildHeaderFromCSV(csvFilePath);
+            System.out.println(header);
+            System.out.println("Header length: " + header.length());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String buildHeaderFromCSV(String csvFilePath) throws IOException {
+        Map<String, Integer> fieldLengths = new LinkedHashMap<>();
+        fieldLengths.put("VERSIONTAG", 4);
+        fieldLengths.put("BUSINESS UNIT", 256);
+        fieldLengths.put("MESSAGEID", 64);
+        fieldLengths.put("ENTITY", 15);
+        fieldLengths.put("RESERVED", 17);
+        fieldLengths.put("BYPASSREVIEW", 1);
+        fieldLengths.put("COMMAND", 1);
+        fieldLengths.put("BUSINESSTYPE", 64);
+        fieldLengths.put("MESSAGETYPE", 8);
+        fieldLengths.put("IOINDICATOR", 1);
+        fieldLengths.put("SENDERREFERENCE", 38);
+        fieldLengths.put("CURRENCY", 3);
+        fieldLengths.put("AMOUNT", 18);
+        fieldLengths.put("APPCODE", 8);
+        fieldLengths.put("USERCODE", 8);
+        fieldLengths.put("FORMAT", 16);
+        fieldLengths.put("CURRENCY2", 3);
+        fieldLengths.put("SENDER", 32);
+        fieldLengths.put("RECEIVER", 32);
+        fieldLengths.put("APPRIORITY", 2);
+        fieldLengths.put("CUTOFF", 4);
+        fieldLengths.put("CHECKSUM", 32);
+        fieldLengths.put("SYSTEMID", 64);
+        fieldLengths.put("NORMALAMOUNT", 20);
+
+        List<Map<String, String>> csvData = readCSV(csvFilePath);
+
+        if (csvData.isEmpty()) {
+            throw new IllegalArgumentException("CSV file is empty or improperly formatted.");
+        }
+
+        Map<String, String> firstRow = csvData.get(0); // Assuming single row for simplicity
+        StringBuilder header = new StringBuilder();
+
+        for (Map.Entry<String, Integer> entry : fieldLengths.entrySet()) {
+            String value = firstRow.getOrDefault(entry.getKey(), "");
+            header.append(padRight(value, entry.getValue()));
+        }
+
+        return header.toString();
+    }
+
+    private static List<Map<String, String>> readCSV(String filePath) throws IOException {
+        List<Map<String, String>> data = new ArrayList<>();
+        
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(filePath))) {
+            String[] headers = br.readLine().split(",");
+            String line;
+            
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                Map<String, String> row = new LinkedHashMap<>();
+                
+                for (int i = 0; i < headers.length; i++) {
+                    row.put(headers[i], i < values.length ? values[i] : "");
+                }
+                
+                data.add(row);
+            }
+        }
+        
+        return data;
+    }
+
+    private static String padRight(String text, int length) {
+        if (text.length() > length) {
+            return text.substring(0, length);
+        }
+        
+        return String.format("%-" + length + "s", text); // Pads with spaces
+    }
+}
