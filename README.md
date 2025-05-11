@@ -1,3 +1,16 @@
+
+Use Cases:
+
+Faster Troubleshooting:
+Instantly correlate spikes in CPU/memory/disk with application logs to pinpoint root causes.
+
+Capacity Planning:
+Analyze historical trends to forecast resource needs and optimize spending.
+
+Compliance & Reporting:
+Maintain a complete audit trail of system performance for regulatory or internal reviews.
+
+
 Unified Metrics Collection
 
 Integrates data from Splunk, infrastructure (CPU, memory, disk), and other sources for holistic visibility.
