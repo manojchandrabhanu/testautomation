@@ -1,3 +1,37 @@
+Unified Metrics Collection
+
+Integrates data from Splunk, infrastructure (CPU, memory, disk), and other sources for holistic visibility.
+
+Eliminates context switching-view logs, metrics, and traces together in one dashboard.
+
+Historical Data Storage
+
+All metrics are stored in a time-series database for long-term trend analysis, anomaly detection, and capacity planning.
+
+Enables comparison of current and historical performance to identify patterns and prevent incidents.
+
+Real-Time Monitoring & Alerts
+
+Live dashboards with customizable alerts for proactive issue detection.
+
+Drill down from high-level trends to granular root cause-across applications and infrastructure.
+
+Seamless Integration
+
+Out-of-the-box connectors for Splunk and leading infrastructure monitoring tools.
+
+Cloud-agnostic and extensible for hybrid environments.
+
+User-Friendly Interface
+
+Intuitive, visually rich UI with interactive charts and filters for rapid insight.
+
+Customizable views for different teams and stakeholders.
+
+
+
+
+
 import java.util.Random
 
 def randomizeValue(String value) {
