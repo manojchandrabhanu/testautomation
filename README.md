@@ -1,3 +1,16 @@
+stage('Collect Logs') {
+  steps {
+    sh '''
+      kubectl get pods -l job-name=<your-job-label> -o name | while read pod; do
+        echo "===== Logs for $pod ====="
+        kubectl logs $pod
+      done
+    '''
+  }
+}
+
+
+
 
 Use Cases:
 
