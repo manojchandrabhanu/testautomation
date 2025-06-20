@@ -1,3 +1,5 @@
+I have 2 scenarios in an extent report namely "CSU pass" and "GSC pass" along with multiple other scenarios in a feature file. By default, if one scenario skips, the result of the feature is marked as skip. I want to mark the final execution result of the feature as pass if one of the scenarios among "CSU pass" and "GSC pass" are skipped and the other is passed. write a custom javascript that I can use in the extent config
+
 $('.test').each(function() {
     var feature = $(this);
     var scenarios = feature.find('.node .test-name');
